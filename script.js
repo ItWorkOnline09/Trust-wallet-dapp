@@ -1,22 +1,26 @@
-// Import WalletConnect
-const WalletConnectProvider = window.WalletConnectProvider.default;
+import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
+
+// Define WalletConnect Provider
+const walletConnect = new WalletConnectConnector({
+    rpc: { 195: "https://api.trongrid.io" }, // Tron Network RPC
+    bridge: "https://bridge.walletconnect.org",
+    qrcode: true,
+});
 
 // Connect Wallet Function
 async function connectWallet() {
-    const provider = new WalletConnectProvider({
-        rpc: {
-            195: "https://api.trongrid.io", // Tron Network RPC
-        }
-    });
-
-    await provider.enable();
-    window.web3 = new Web3(provider);
-    alert("Wallet Connected!");
+    try {
+        await walletConnect.activate();
+        alert("Wallet Connected!");
+    } catch (error) {
+        console.error(error);
+        alert("Failed to connect wallet.");
+    }
 }
 
-// Add Token Function
+// Add USDT Token Function
 async function addUSDTToken() {
-    if (!window.web3) {
+    if (!walletConnect.provider) {
         alert("Please connect your wallet first!");
         return;
     }
@@ -25,7 +29,7 @@ async function addUSDTToken() {
         type: "TRC20",
         contract: "TGkxzkDKyMeq2T7edKnyjZoFypyzjkkssq",
         symbol: "USDT",
-        decimals: 6
+        decimals: 6,
     };
 
     try {
@@ -36,9 +40,9 @@ async function addUSDTToken() {
                 options: {
                     address: tokenDetails.contract,
                     symbol: tokenDetails.symbol,
-                    decimals: tokenDetails.decimals
-                }
-            }
+                    decimals: tokenDetails.decimals,
+                },
+            },
         });
         alert("USDT (TRC20) Added to Trust Wallet!");
     } catch (error) {
@@ -47,6 +51,6 @@ async function addUSDTToken() {
     }
 }
 
-// Button Event Listeners
+// Attach Functions to Buttons
 document.getElementById("connectWallet").addEventListener("click", connectWallet);
 document.getElementById("addToken").addEventListener("click", addUSDTToken);
