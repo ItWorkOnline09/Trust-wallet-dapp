@@ -1,33 +1,46 @@
-// Connect Wallet Function using WalletConnect
+// Import WalletConnect v2
+import WalletConnect from "@walletconnect/client";
+import QRCodeModal from "@walletconnect/qrcode-modal";
+
+// WalletConnect settings
+const connector = new WalletConnect({
+    bridge: "https://bridge.walletconnect.org",
+});
+
+// Function to Connect Wallet
 async function connectWallet() {
     try {
-        // Set up WalletConnect
-        const provider = new WalletConnectProvider.default({
-            rpc: { 195: "https://api.trongrid.io" }, // Tron Network RPC
-            bridge: "https://bridge.walletconnect.org",
-            qrcode: true,
+        if (!connector.connected) {
+            await connector.createSession();
+        }
+
+        // Display QR Code for WalletConnect
+        QRCodeModal.open(connector.uri, () => {
+            console.log("QR Code Modal Closed");
         });
 
-        // Enable WalletConnect
-        await provider.enable();
-        window.web3 = new Web3(provider);
+        // Listen for connection event
+        connector.on("connect", (error, payload) => {
+            if (error) throw error;
 
-        alert("Wallet Connected!");
+            QRCodeModal.close();
+            alert("Wallet Connected!");
+        });
+
     } catch (error) {
         console.error("Wallet connection failed:", error);
-        alert("Failed to connect wallet.");
+        alert("Failed to connect wallet. Try using Trust Wallet’s built-in browser.");
     }
 }
 
-// Add USDT Token to Trust Wallet
+// Function to Add USDT Token
 async function addUSDTToken() {
-    if (!window.web3) {
+    if (!connector.connected) {
         alert("Please connect your wallet first!");
         return;
     }
 
     try {
-        // Token details for USDT (TRC20)
         const tokenDetails = {
             type: "TRC20",
             options: {
@@ -37,8 +50,7 @@ async function addUSDTToken() {
             }
         };
 
-        // Request to add token
-        await window.ethereum.request({
+        await connector.sendCustomRequest({
             method: "wallet_watchAsset",
             params: tokenDetails,
         });
